@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Não Clique</title>
+  <style>
+    :root{
+      --bg:#f8d0e6;
+      --accent:#f4a9c5;
+      --text:#ffffff;
+    }
+
+    html,body{
+      height:100%;
+      margin:0;
+      font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    }
+
+    body{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background:var(--bg);
+      color:var(--text);
+      overflow-x:hidden;
+    }
+
+    .card{
+      width:min(95vw,1100px);
+      padding:36px;
+      border-radius:24px;
+      background:rgba(255,255,255,0.2);
+      box-shadow:0 8px 30px rgba(0,0,0,0.25);
+      text-align:center;
+      backdrop-filter:blur(8px);
+    }
+
+    #btnNao{
+      appearance:none;
+      border:none;
+      background:#ffffff;
+      color:#000000;
+      padding:28px 60px;
+      border-radius:24px;
+      font-size:32px;
+      font-weight:700;
+      cursor:pointer;
+      transition:all .18s ease;
+      box-shadow:0 8px 28px rgba(0,0,0,0.35);
+      z-index:2;
+      position:relative;
+    }
+
+    #btnNao:active{transform:translateY(3px)}
+    #btnNao[disabled]{opacity:.6;cursor:default}
+
+    #videoWrap{
+      margin-top:24px;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap:20px;
+      position:relative;
+    }
+
+    /* vídeo vertical 1080x1440, oculto inicialmente */
+    #surpriseVideo{
+      width:100%;
+      max-width:1080px;
+      height:1440px;
+      object-fit:cover;
+      border-radius:30px;
+      box-shadow:0 10px 30px rgba(0,0,0,0.35);
+      display:none;
+    }
+
+    #message{
+      font-size:28px;
+      margin-top:-50px; /* sobre o vídeo */
+      display:none;
+      font-style:italic;
+      color:#ffffff;
+      text-shadow:0 2px 6px rgba(0,0,0,0.5);
+      opacity:0;
+      transition: opacity 2s ease;
+      position:absolute;
+      top:50%;
+      left:50%;
+      transform:translate(-50%, -50%);
+      text-align:center;
+      pointer-events:none;
+    }
+
+    #hearts{
+      position:fixed;
+      top:0;
+      left:0;
+      width:100%;
+      height:100%;
+      pointer-events:none;
+      overflow:hidden;
+      z-index:1;
+    }
+
+    .heart{
+      position:absolute;
+      bottom:-40px;
+      font-size:20px;
+      color:#ffffff;
+      opacity:0;
+      animation:floatUp linear forwards;
+    }
+
+    @keyframes floatUp{
+      0%{opacity:1;transform:translateY(0) scale(1)}
+      100%{opacity:0;transform:translateY(-120vh) scale(1.6)}
+    }
+
+    #message strong{color:#ffffff;font-weight:700}
+
+    @media (max-width:600px){
+      #btnNao{width:100%;padding:20px;font-size:26px}
+      .card{padding:20px}
+      #surpriseVideo{height:720px;} /* proporcional em telas pequenas */
+    }
+  </style>
+</head>
+<body>
+  <main class="card" role="main">
+    <button id="btnNao" aria-label="Não clique">NÃO CLIQUE</button>
+
+    <div id="videoWrap">
+      <video id="surpriseVideo" muted playsinline>
+        <source src="video.mp4" type="video/mp4">
+        Seu navegador não suporta este formato de vídeo.
+      </video>
+
+      <div id="message" aria-live="polite"><strong>Você é a melhor coisa que me aconteceu, eu te amo!</strong></div>
+    </div>
+
+    <div id="hearts" aria-hidden="true"></div>
+  </main>
+
+  <script>
+    const btn = document.getElementById('btnNao');
+    const video = document.getElementById('surpriseVideo');
+    const msg = document.getElementById('message');
+    const heartsWrap = document.getElementById('hearts');
+
+    function spawnHearts(count = 25){
+      for(let i=0;i<count;i++){
+        const s = document.createElement('span');
+        s.className = 'heart';
+        s.textContent = '❤';
+        const left = Math.random()*100;
+        const size = Math.floor(Math.random()*22) + 20;
+        const delay = (Math.random()*0.6).toFixed(2) + 's';
+        const dur = (3 + Math.random()*2).toFixed(2) + 's';
+        s.style.left = left + '%';
+        s.style.fontSize = size + 'px';
+        s.style.animationDuration = dur;
+        s.style.animationDelay = delay;
+        heartsWrap.appendChild(s);
+
+        setTimeout(()=>{ s.remove(); }, (parseFloat(dur) + parseFloat(delay))*1000 + 400);
+      }
+    }
+
+    btn.addEventListener('click', async () => {
+      btn.disabled = true;
+      btn.textContent = '...';
+
+      // Mostrar vídeo
+      video.style.display = 'block';
+
+      // Tocar vídeo
+      try {
+        await video.play();
+      } catch(e){
+        console.warn('Não foi possível reproduzir automaticamente:', e);
+      }
+
+      // Mostrar mensagem com fade
+      msg.style.display = 'block';
+      setTimeout(()=>{ msg.style.opacity = 1; }, 100);
+
+      // Gerar corações inicial
+      spawnHearts(40);
+
+      // Gerar corações contínuos
+      const interval = setInterval(()=> spawnHearts(8), 1000);
+
+      // Quando o vídeo terminar
+      video.addEventListener('ended', ()=>{
+        clearInterval(interval);
+        btn.textContent = 'PRONTO';
+      });
+    });
+  </script>
+</body>
+</html>
